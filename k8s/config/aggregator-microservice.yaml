@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggregator-deployment
+  labels:
+    app: aggregator-microservice
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: aggregator-microservice
+  template:
+    metadata:
+      labels:
+        app: aggregator-microservice
+    spec:
+      containers:
+      - name: aggregator-microservice
+        image: petrakelkovic/aggregator-microservice:17
+        ports:
+        - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: aggregator-microservice-config
+        env:
+        - name: SPRING_APPLICATION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: spring.application.name
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: server.port
+        - name: MQTT_BROKER_URI
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: mqtt.broker.url
+        - name: MQTT_HUM_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: mqtt.topic.hum
+        - name: MQTT_TEMP_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: mqtt.topic.temp
+        - name: MQTT_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: aggregator-microservice-config
+              key: mqtt.client.id
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggregator-service
+spec:
+  type: ClusterIP
+  selector:
+    app: aggregator-microservice
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

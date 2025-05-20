@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: humidity-deployment
+  labels:
+    app: humidity-microservice
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: humidity-microservice
+  template:
+    metadata:
+      labels:
+        app: humidity-microservice
+    spec:
+      containers:
+      - name: humidity-microservice
+        image: petrakelkovic/humidity-microservice:17
+        ports:
+        - containerPort: 8082
+        envFrom:
+          - configMapRef:
+              name: humidity-microservice-config
+        env:
+        - name: SPRING_APPLICATION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.application.name
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.datasource.url
+        - name: SPRING_DATASOURCE_DRIVERCLASSNAME
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.datasource.driverClassName
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.datasource.username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.datasource.password
+        - name: SPRING_JPA_DATABASEPLATFORM
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.jpa.database-platform
+        - name: SPRING_JPA_OPENINVIEW
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.jpa.open-in-view
+        - name: SPRING_JPA_HIBERNATE_DDLAUTO
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.jpa.hibernate.ddl-auto
+        - name: SPRING_H2_CONSOLE_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.h2.console.enabled
+        - name: SPRING_H2_CONSOLE_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: spring.h2.console.path
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: server.port
+        - name: MQTT_CLIENT_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MQTT_BROKER_URI
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: mqtt.broker.uri
+        - name: MQTT_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: mqtt.topic
+        - name: PERIOD
+          valueFrom:
+            configMapKeyRef:
+              name: humidity-microservice-config
+              key: period
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: humidity-service
+spec:
+  type: ClusterIP
+  selector:
+    app: humidity-microservice
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082

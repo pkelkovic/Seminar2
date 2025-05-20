@@ -1,0 +1,44 @@
+# Za izvođenje naredbi treba biti pozicioniran u k8s/config folder
+# Takoder, pretpostavlja se da je traefik uspješno instaliran i konfiguriran
+# Napomena: za izvođenje naredbi potrebno je najprije upaliti docker desktop, a zatim rancher desktop
+
+# Pokretanje config mapa za temperaturni mikroservis:
+kubectl apply -f temperature-microservice-config.yaml
+
+# Pokretanje config mapa za mikroservis vlage:
+kubectl apply -f humidity-microservice-config.yaml
+
+# Pokretanje config mapa za mikroservis agregator:
+kubectl apply -f aggregator-microservice-config.yaml
+
+# Pokretanje deploymenta i servisa za temperaturni mikroservis:
+kubectl apply -f temperature-microservice.yaml
+
+# Pokretanje deploymenta i servisa za mikroservis vlage:
+kubectl apply -f humidity-microservice.yaml
+
+# Pokretanje deploymenta i servisa za mikroservis agregatora:
+kubectl apply -f aggregator-microservice.yaml
+
+# Pokretanje gateway-a za mikroservis agregatora, za rutu /reading:
+kubectl apply -f aggregator-microservice-route.yaml
+
+# Testiranje:
+curl http://localhost/reading
+
+--> naredba bi trebala ispisati nesto poput ovog:
+["{id=1, name=Humidity, unit=%, val=60.0}","{id=1, name=Temperature, unit=C, val=27.0}"]
+
+Servisu se moze pristupiti i preko internet preglednika, na adresi http://localhost/reading
+
+# Ako se zeli promjeniti mjerna jedinica temperature, to se radi unutar file-a aggregator-microservice-config
+# Treba postaviti temperature.unit na željenu jedinicu, "K" ili "C" 
+# Zatim je potrebno pokrenuti naredbu:
+kubectl apply -f aggregator-microservice-config.yaml
+
+# A nakon toga obrisati mikroservis sa starom konfiguracijom kako bi se osvježile postavke
+kubectl delete pod <aggregator_pod_name>   
+*ime se moze saznati naredbom kubectl get pods i trazi se onaj koji zapocinje sa aggregator-deployment
+
+# Testiranje:
+curl http://localhost/reading
